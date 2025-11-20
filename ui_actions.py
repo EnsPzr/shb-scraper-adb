@@ -88,8 +88,9 @@ def close_cookie_dialog(d):
 
 
 def click_category(d, name):
-    """Vasıta kategorisine tıklar"""
-    print("\n--- Vasıta Kategorisine Tıklanıyor ---")
+    """{name} kategorisine tıklar"""
+    print(f"\n--- {name} Kategorisine Tıklanıyor ---")
+    time.sleep(4)
     try:
         # Çeşitli olası yolları dene
         

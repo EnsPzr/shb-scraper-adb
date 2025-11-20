@@ -37,8 +37,29 @@ def is_app_installed(device_id):
         return False
 
 
+def is_app_running(device_id):
+    """Sahibinden uygulamasının çalışıp çalışmadığını kontrol eder"""
+    try:
+        cmd = ['adb']
+        if device_id:
+            cmd.extend(['-s', device_id])
+        cmd.extend(['shell', 'pidof', SAHIBINDEN_PACKAGE])
+        
+        result = subprocess.run(cmd, 
+                              capture_output=True, 
+                              text=True, 
+                              timeout=5)
+        
+        # Eğer pidof bir PID döndürürse, uygulama çalışıyor demektir
+        is_running = result.stdout.strip() != ''
+        return is_running
+    except Exception as e:
+        # Hata durumunda False döndür (güvenli taraf)
+        return False
+
+
 def launch_app(device_id):
-    """Sahibinden uygulamasını açar"""
+    """Sahibinden uygulamasını açar (eğer çalışıyorsa önce kapatır)"""
     print("\n--- Uygulama Başlatılıyor ---")
     
     if not is_app_installed(device_id):
@@ -46,12 +67,26 @@ def launch_app(device_id):
         return False
     
     try:
-        # Önce uygulamayı durdur (temiz başlangıç için)
+        # Önce uygulamanın çalışıp çalışmadığını kontrol et
+        if is_app_running(device_id):
+            print("  → Uygulama çalışıyor, kapatılıyor...")
+            cmd_stop = ['adb']
+            if device_id:
+                cmd_stop.extend(['-s', device_id])
+            cmd_stop.extend(['shell', 'am', 'force-stop', SAHIBINDEN_PACKAGE])
+            subprocess.run(cmd_stop, capture_output=True, timeout=5)
+            time.sleep(1)  # Kapanma için kısa bekleme
+            print("  ✓ Uygulama kapatıldı")
+        else:
+            print("  → Uygulama çalışmıyor, direkt başlatılıyor...")
+        
+        # Uygulamayı durdur (eğer hala çalışıyorsa)
         cmd_stop = ['adb']
         if device_id:
             cmd_stop.extend(['-s', device_id])
         cmd_stop.extend(['shell', 'am', 'force-stop', SAHIBINDEN_PACKAGE])
         subprocess.run(cmd_stop, capture_output=True, timeout=5)
+        time.sleep(0.5)  # Kapanma için kısa bekleme
         
         # Monkey komutu ile uygulamayı başlat (en güvenli yöntem)
         # Bu yöntem, exported olmayan aktiviteleri de başlatabilir

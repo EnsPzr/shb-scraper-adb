@@ -5,9 +5,10 @@ Sahibinden Bot sınıfı
 
 from device import check_adb, connect_device
 from app import launch_app
-from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category
+from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category, click_otomobil_category
 from category_reader import read_vasita_categories
 from database import run_migration, save_categories
+import time
 
 
 class SahibindenBot:
@@ -54,6 +55,10 @@ class SahibindenBot:
         """Vasıta kategorisine tıklar"""
         return click_vasita_category(self.d)
     
+    def click_otomobil_category(self):
+        """Otomobil kategorisine tıklar"""
+        return click_otomobil_category(self.d)
+
     def run(self):
         """Ana çalıştırma fonksiyonu"""
         print("=" * 50)
@@ -99,9 +104,9 @@ class SahibindenBot:
             print("⚠️  Hiç kategori bulunamadı")
             return False
         
-        # Kategorileri veritabanına kaydet
+        # Kategorileri veritabanına kaydet (deviceId boş olacak)
         print("\n--- Kategoriler Veritabanına Kaydediliyor ---")
-        if not save_categories(categories, self.device_id, page=1):
+        if not save_categories(categories, device_id=None, page=1):
             print("⚠️  Kategoriler kaydedilemedi")
             return False
         
