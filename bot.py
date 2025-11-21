@@ -3,12 +3,14 @@
 Sahibinden Bot sınıfı
 """
 
+import os
+import time
+
 from device import check_adb, connect_device
 from app import launch_app
 from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category, click_otomobil_category
 from category_reader import read_vasita_categories
 from database import run_migration, save_categories
-import time
 
 
 class SahibindenBot:
@@ -18,6 +20,7 @@ class SahibindenBot:
         """Bot'u başlatır ve ADB bağlantısını kontrol eder"""
         self.device_id = None
         self.d = None  # uiautomator2 device instance
+        self.device_token = None
         
     def check_adb(self):
         """ADB'nin kurulu olup olmadığını kontrol eder"""
@@ -69,6 +72,13 @@ class SahibindenBot:
         print("\n--- Veritabanı Hazırlanıyor ---")
         if not run_migration():
             print("⚠️  Veritabanı migration başarısız, devam ediliyor...")
+        
+        # Ortam değişkeninden cihaz belirtecini al
+        self.device_token = os.environ.get("DEVICE_TOKEN")
+        if not self.device_token:
+            print("✗ DEVICE_TOKEN ortam değişkeni bulunamadı. Lütfen ayarlayıp tekrar deneyin.")
+            return False
+        print(f"Kullanılacak cihaz belirteci: {self.device_token}")
         
         # ADB kontrolü
         if not self.check_adb():

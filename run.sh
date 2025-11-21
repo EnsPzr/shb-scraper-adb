@@ -33,6 +33,14 @@ echo "Paketler başarıyla yüklendi."
 echo "Sahibinden bot başlatılıyor..."
 echo "----------------------------------------"
 
+# DEVICE_TOKEN kontrolü
+if [ -z "$DEVICE_TOKEN" ]; then
+    echo "Hata: DEVICE_TOKEN ortam değişkeni tanımlı değil!"
+    echo "Lütfen scripti çalıştırmadan önce export DEVICE_TOKEN=<değer> şeklinde ayarlayın."
+    deactivate
+    exit 1
+fi
+
 # Python botunu çalıştır
 python3 sahibinden_bot.py
 
