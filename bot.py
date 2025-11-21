@@ -10,7 +10,7 @@ from device import check_adb, connect_device
 from app import launch_app
 from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category, click_otomobil_category
 from category_reader import read_vasita_categories
-from database import run_migration, save_categories
+from database import run_migration, save_categories, assign_category_to_device
 
 
 class SahibindenBot:
@@ -21,6 +21,7 @@ class SahibindenBot:
         self.device_id = None
         self.d = None  # uiautomator2 device instance
         self.device_token = None
+        self.assigned_category = None
         
     def check_adb(self):
         """ADB'nin kurulu olup olmadığını kontrol eder"""
@@ -120,6 +121,17 @@ class SahibindenBot:
             print("⚠️  Kategoriler kaydedilemedi")
             return False
         
+        # İşlenecek kategoriyi belirle
+        self.assigned_category = assign_category_to_device(self.device_token)
+        if not self.assigned_category:
+            print("✗ İşlenebilecek kategori bulunamadı.")
+            return False
+        print(
+            "İşlenecek kategori: "
+            f"{self.assigned_category['parentCategory']} -> {self.assigned_category['subCategory']} "
+            f"(order={self.assigned_category['order']})"
+        )
+
         print("\n" + "=" * 50)
         print("✓ İşlem tamamlandı!")
         print("=" * 50)

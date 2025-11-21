@@ -198,3 +198,111 @@ def save_categories(categories, device_id=None, page=1):
             conn.close()
         return False
 
+
+def _map_category_row(row):
+    """Helper to convert a category row tuple into a dict."""
+    return {
+        "id": row[0],
+        "parentCategory": row[1],
+        "subCategory": row[2],
+        "page": row[3],
+        "deviceId": row[4],
+        "isCompleted": row[5],
+        "order": row[6],
+    }
+    
+def assign_category_to_device(device_token):
+    """Assigns or retrieves a category for the provided device token."""
+    if not device_token:
+        print("✗ Geçersiz cihaz belirteci.")
+        return None
+    
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    cursor = None
+    assigned = None
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Step 1: Try to find an unfinished category already assigned to this device
+        cursor.execute(
+            """
+            SELECT id, parentCategory, subCategory, page, deviceId, isCompleted, "order"
+            FROM categories
+            WHERE isCompleted = FALSE AND deviceId = %s
+            ORDER BY "order" ASC, id ASC
+            LIMIT 1
+            """,
+            (device_token,)
+        )
+        row = cursor.fetchone()
+        if row:
+            assigned = _map_category_row(row)
+            return assigned
+        
+        # Step 2: Claim a pending priority category (order = 0)
+        cursor.execute(
+            """
+            WITH selected AS (
+                SELECT id FROM categories
+                WHERE isCompleted = FALSE
+                  AND "order" = 0
+                  AND (deviceId IS NULL OR deviceId = '')
+                ORDER BY id
+                LIMIT 1
+            )
+            UPDATE categories AS c
+            SET deviceId = %s, updated_at = CURRENT_TIMESTAMP
+            FROM selected
+            WHERE c.id = selected.id
+            RETURNING c.id, c.parentCategory, c.subCategory, c.page, c.deviceId, c.isCompleted, c."order"
+            """,
+            (device_token,)
+        )
+        row = cursor.fetchone()
+        if row:
+            conn.commit()
+            assigned = _map_category_row(row)
+            return assigned
+        
+        # Step 3: Claim a pending non-priority category (order = 1)
+        cursor.execute(
+            """
+            WITH selected AS (
+                SELECT id FROM categories
+                WHERE isCompleted = FALSE
+                  AND "order" = 1
+                  AND (deviceId IS NULL OR deviceId = '')
+                ORDER BY id
+                LIMIT 1
+            )
+            UPDATE categories AS c
+            SET deviceId = %s, updated_at = CURRENT_TIMESTAMP
+            FROM selected
+            WHERE c.id = selected.id
+            RETURNING c.id, c.parentCategory, c.subCategory, c.page, c.deviceId, c.isCompleted, c."order"
+            """,
+            (device_token,)
+        )
+        row = cursor.fetchone()
+        if row:
+            conn.commit()
+            assigned = _map_category_row(row)
+            return assigned
+        
+        return None
+    
+    except Exception as e:
+        print(f"✗ Kategori seçimi sırasında hata: {e}")
+        if conn:
+            conn.rollback()
+        return None
+    
+    finally:
+        if cursor:
+            cursor.close()
+        conn.close()
+
