@@ -88,29 +88,14 @@ def close_cookie_dialog(d):
 
 
 def scroll_to_top(d):
-    """Sayfayı en üste kaydırır"""
-    print("  → Sayfa en üste kaydırılıyor...")
+    print("  → Hızlı scrollToBeginning çalışıyor...")
     try:
-        # Ekran boyutlarını al
-        width, height = d.window_size()
-        center_x = width // 2
-        
-        # Birkaç kez yukarı doğru swipe yap (en üste ulaşmak için)
-        for i in range(5):
-            # Ekranın üst kısmından başlayıp daha da yukarı swipe yap
-            start_y = int(height * 0.2)  # Ekranın %20'sinden başla
-            end_y = int(height * 0.8)    # Ekranın %80'ine kadar swipe yap (yukarı kaydırma)
-            
-            d.swipe(center_x, start_y, center_x, end_y, duration=0.3)
-            time.sleep(0.5)
-        
-        time.sleep(1)
-        print("  ✓ Sayfa en üste kaydırıldı")
+        d(scrollable=True).scroll.toBeginning(max_swipes=100)
+        print("  ✓ En üste çıkıldı")
         return True
     except Exception as e:
-        print(f"  ⚠️  Sayfa üste kaydırılırken hata: {e}")
-        return True  # Hata olsa bile devam et
-
+        print(f"  ⚠️ Hata: {e}")
+        return True
 
 def click_category(d, name):
     """{name} kategorisine tıklar - önce en üste scroll yapar, sonra aşağı kaydırarak arar"""
