@@ -8,7 +8,7 @@ import time
 
 from device import check_adb, connect_device
 from app import launch_app
-from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category, click_otomobil_category
+from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category, click_otomobil_category, click_category, click_tum_button
 from category_reader import read_vasita_categories
 from database import (
     run_migration,
@@ -141,6 +141,17 @@ class SahibindenBot:
             f"{self.assigned_category['parentCategory']} -> {self.assigned_category['subCategory']} "
             f"(order={self.assigned_category['order']})"
         )
+
+        # Kategori butonuna tıkla (örneğin "Honda")
+        category_name = self.assigned_category['subCategory']
+        if not click_category(self.d, category_name):
+            print(f"✗ '{category_name}' kategorisine tıklanamadı")
+            return False
+        
+        # "Tüm {category_name} İlanları" butonuna tıkla
+        if not click_tum_button(self.d, category_name):
+            print(f"✗ 'Tüm {category_name} İlanları' butonuna tıklanamadı")
+            return False
 
         print("\n" + "=" * 50)
         print("✓ İşlem tamamlandı!")
