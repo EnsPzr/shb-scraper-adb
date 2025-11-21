@@ -10,7 +10,12 @@ from device import check_adb, connect_device
 from app import launch_app
 from ui_actions import init_ui_automator, close_cookie_dialog, click_vasita_category, click_otomobil_category
 from category_reader import read_vasita_categories
-from database import run_migration, save_categories, assign_category_to_device
+from database import (
+    run_migration,
+    save_categories,
+    assign_category_to_device,
+    has_any_categories,
+)
 
 
 class SahibindenBot:
@@ -108,18 +113,23 @@ class SahibindenBot:
         if not self.click_otomobil_category():
             return False
         
-        # Kategorileri oku
-        categories = read_vasita_categories(self.d)
-        
-        if not categories:
-            print("⚠️  Hiç kategori bulunamadı")
-            return False
-        
-        # Kategorileri veritabanına kaydet (deviceId boş olacak)
-        print("\n--- Kategoriler Veritabanına Kaydediliyor ---")
-        if not save_categories(categories, device_id=None, page=1):
-            print("⚠️  Kategoriler kaydedilemedi")
-            return False
+        needs_category_seed = not has_any_categories()
+        if needs_category_seed:
+            print("\n✱ Kategori tablosu boş, uygulamadan kategoriler okunacak...")
+            # Kategorileri oku
+            categories = read_vasita_categories(self.d)
+            
+            if not categories:
+                print("⚠️  Hiç kategori bulunamadı")
+                return False
+            
+            # Kategorileri veritabanına kaydet (deviceId boş olacak)
+            print("\n--- Kategoriler Veritabanına Kaydediliyor ---")
+            if not save_categories(categories, device_id=None, page=1):
+                print("⚠️  Kategoriler kaydedilemedi")
+                return False
+        else:
+            print("✓ Veritabanında mevcut kategoriler bulundu, kategori okuma adımı atlanacak.")
         
         # İşlenecek kategoriyi belirle
         self.assigned_category = assign_category_to_device(self.device_token)

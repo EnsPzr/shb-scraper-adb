@@ -132,6 +132,26 @@ def insert_category(conn, parent_category, sub_category, page, device_id, is_com
         return False
 
 
+def has_any_categories():
+    """Tabloda herhangi bir kategori olup olmadığını kontrol eder."""
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT EXISTS (SELECT 1 FROM categories LIMIT 1);")
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return bool(result[0]) if result else False
+    except Exception as e:
+        print(f"✗ Kategori varlık kontrolü sırasında hata: {e}")
+        if conn:
+            conn.close()
+        return False
+
+
 def save_categories(categories, device_id=None, page=1):
     """Kategori listesini veritabanına kaydeder (öncelikli kategoriler önce işlenir)"""
     from category_reader import is_priority_category
@@ -210,7 +230,8 @@ def _map_category_row(row):
         "isCompleted": row[5],
         "order": row[6],
     }
-    
+
+
 def assign_category_to_device(device_token):
     """Assigns or retrieves a category for the provided device token."""
     if not device_token:
